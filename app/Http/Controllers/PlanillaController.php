@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\DB;
 
+use Illuminate\Support\Facades\Storage;
+
 use Illuminate\Http\Request;
 use App\Planilla;
 use App\Personal;
@@ -25,6 +27,7 @@ use Fpdf;
 use Carbon\Carbon;
 use App\Parametros;
 use App\Uejecutora;
+use App\Estacion;
 
 use Barryvdh\DomPDF\Facade\Pdf;
 use Dflydev\DotAccessData\Data;
@@ -918,30 +921,37 @@ class PlanillaController extends Controller
 
         $cod_planilla= $request->cod_planilla;
 
-        $boletas = Detalleplanilla::join('planilla', 'detalle_planilla.planilla_cod_planilla', '=', 'planilla.cod_planilla')
-                                    ->join('contratos', 'detalle_planilla.contrato_cod_contrato', '=', 'contratos.cod_contrato')
-                                    ->join('personal', 'contratos.personal_cod_personal', '=', 'personal.cod_personal')
-                                    ->join('sexo', 'personal.sexo_cod_sexo', '=', 'sexo.cod_sexo')
-                                    ->join('estado_civil', 'personal.estado_civil_cod_estado_civil', '=', 'estado_civil.cod_estado_civil')
-                                    ->join('admin_pensiones', 'personal.admin_pension_cod_admin_pension', '=', 'admin_pensiones.cod_admin_pension')
-                                    ->join('areas', 'contratos.area_a_cod_area', '=', 'areas.a_cod_area')
-                                    ->join('regimen_laboral', 'contratos.regimen_laboral_cod_regimen_laboral', '=', 'regimen_laboral.cod_regimen_laboral')
-                                    ->join('tipo_trabajador', 'contratos.tipo_trabajador_cod_tipo_trabajador', '=', 'tipo_trabajador.cod_tipo_trabajador')
-                                    ->join('cargos', 'contratos.cargo_cod_cargo', '=', 'cargos.cod_cargo')
-                                    ->join('meta','contratos.meta_m_cod_meta', '=', 'meta.m_cod_meta')
-                                    ->with('Planilla_Conceptos')
-                                    ->where('planilla_cod_planilla', $cod_planilla)
-                                    ->orderBy('p_a_paterno','asc')
-                                    ->orderBy('p_a_materno','asc')
-                                    ->get();
-
+        $estaciones = Estacion::where('ejecutora_e_id','=','001')->get();
         $Uejecutoras = Uejecutora::first();
 
-        $pdf = PDF::loadView('pdf.boletasv2', compact('boletas','Uejecutoras'));
+        foreach($estaciones as $estacion) {
 
-        $pdf->setPaper('A4');
+            $boletas = Detalleplanilla::join('planilla', 'detalle_planilla.planilla_cod_planilla', '=', 'planilla.cod_planilla')
+                ->join('contratos', 'detalle_planilla.contrato_cod_contrato', '=', 'contratos.cod_contrato')
+                ->join('personal', 'contratos.personal_cod_personal', '=', 'personal.cod_personal')
+                ->join('sexo', 'personal.sexo_cod_sexo', '=', 'sexo.cod_sexo')
+                ->join('estado_civil', 'personal.estado_civil_cod_estado_civil', '=', 'estado_civil.cod_estado_civil')
+                ->join('admin_pensiones', 'personal.admin_pension_cod_admin_pension', '=', 'admin_pensiones.cod_admin_pension')
+                ->join('areas', 'contratos.area_a_cod_area', '=', 'areas.a_cod_area')
+                ->join('regimen_laboral', 'contratos.regimen_laboral_cod_regimen_laboral', '=', 'regimen_laboral.cod_regimen_laboral')
+                ->join('tipo_trabajador', 'contratos.tipo_trabajador_cod_tipo_trabajador', '=', 'tipo_trabajador.cod_tipo_trabajador')
+                ->join('cargos', 'contratos.cargo_cod_cargo', '=', 'cargos.cod_cargo')
+                ->join('meta','contratos.meta_m_cod_meta', '=', 'meta.m_cod_meta')
+                ->with('Planilla_Conceptos')
+                ->where('planilla_cod_planilla', $cod_planilla)
+                ->where('estacion_est_id',$estacion->est_id)
+                ->orderBy('p_a_paterno','asc')
+                ->orderBy('p_a_materno','asc')
+                ->get();
 
-        return $pdf->stream('archivo.pdf');
+                foreach($boletas as $boleta){
+                    $pdf = PDF::loadView('pdf.boletasv2', compact('boleta','Uejecutoras'));
+                    $pdf->setPaper('A4');
+                    $fileName = 'boletas/'.$estacion->est_nombre.'/'.$boleta->p_num_doc.'-'.$boleta->p_a_paterno.' '.$boleta->p_a_materno.' '.$boleta->p_nombres.'.pdf';
+                    Storage::put($fileName,$pdf->output());
+                }
+
+        }
 
     }
 

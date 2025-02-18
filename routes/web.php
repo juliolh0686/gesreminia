@@ -326,6 +326,8 @@ Route::get('/dashboard','DashboardController');
 
         Route::get('detalleplanilla/Rp_DetallePlanillaExcel','DetalleplanillaController@Rp_DetallePlanillaExcel')->name('detalleplanilla.Rp_DetallePlanillaExcel');
 
+        Route::get('detalleplanilla/rp_Descuentos','DetalleplanillaController@Rp_descuentos')->name('detalleplanilla.rp_Descuentos');
+
         //Aseguradora
         Route::get('aseguradora','AseguradoraController@selectAseguradora')->name('aseguradora');
 
@@ -370,6 +372,11 @@ Route::get('/dashboard','DashboardController');
 
         //Regimen Laboral
         Route::get('registroAirhsp/selectTiporegistroairhsp','TiporegistroairhspController@selectTiporegistroairhsp')->name('registroAirhsp.selectTiporegistroairhsp');
+
+        Route::get('importexcel','ImportplanillaController@import')->name('importexcel');
+        Route::get('personalimportexcel','ImportplanillaController@PersonalImport')->name('personalimportexcel');
+
+        Route::get('detalleplanilla/rp_Descuentos_afp','DetalleplanillaController@Rp_descuentos_AFP')->name('detalleplanilla.rp_Descuentos_afp');
 
 
 //});

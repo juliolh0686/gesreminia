@@ -12,6 +12,6 @@ class Planillaconceptos extends Model
     public $incrementing = false;
 
     protected $fillable = [
-        'cod_planilla_conceptos', 'pll_id_monto', 'concepto_cod_concepto', 'detalle_planilla_cod_detalle_planilla'
+        'cod_planilla_conceptos', 'pll_id_monto', 'concepto_cod_concepto','clasificador_idclasificador','meta_m_cod_meta', 'detalle_planilla_cod_detalle_planilla'
     ];
 }

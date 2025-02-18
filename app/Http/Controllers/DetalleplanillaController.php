@@ -7,11 +7,16 @@ use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
+use Illuminate\Support\Facades\Storage;
+
 use Illuminate\Http\Request;
 use App\Detalleplanilla;
 use App\Planilla;
 use App\Concepto;
 use App\Planillaconceptos;
+use App\Estacion;
+use App\Meta;
+use App\Clasificador;
 
 
 class DetalleplanillaController extends Controller
@@ -321,6 +326,84 @@ class DetalleplanillaController extends Controller
         $objWriter = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Xlsx');
         $objWriter->save('php://output');
 
+
+    }
+
+    Public function Rp_Descuentos(Request $request){
+
+
+        $estaciones = Estacion::where('ejecutora_e_id','=','001')->get();
+        $conceptos = Concepto::all();
+        $metas = Meta::where('m_anio_per','=','2025')->get();
+        $clasificadores = Clasificador::all();
+
+
+        foreach ($estaciones as $estacion) {
+            foreach ($conceptos as $concepto){
+
+               $sql = "SELECT p_num_doc, p_a_paterno, p_a_materno, p_nombres, est_nombre, idclasificador,clasificador, meta, pll_id_monto, estacion_est_id, concepto_cod_concepto 
+                FROM planilla_conceptos 
+                INNER JOIN conceptos ON planilla_conceptos.concepto_cod_concepto = conceptos.cod_concepto
+                INNER JOIN clasificador ON planilla_conceptos.clasificador_idclasificador = clasificador.idclasificador
+                INNER JOIN meta ON planilla_conceptos.meta_m_cod_meta = meta.m_cod_meta
+                INNER JOIN detalle_planilla ON planilla_conceptos.detalle_planilla_cod_detalle_planilla = detalle_planilla.cod_detalle_planilla
+                INNER JOIN contratos ON detalle_planilla.contrato_cod_contrato = contratos.cod_contrato
+                INNER JOIN estacion ON contratos.estacion_est_id = estacion.est_id
+                INNER JOIN personal ON contratos.personal_cod_personal = personal.cod_personal
+                WHERE estacion_est_id = ? AND concepto_cod_concepto = ? AND tipo_concepto_cod_tip_concepto=2 
+                ORDER BY clasificador, meta";
+
+                $datadescuentos = DB::select($sql, [$estacion->est_id, $concepto->cod_concepto]);
+
+                if(!empty($datadescuentos)) {
+                    $pdf = \PDF::loadView('pdf.rep_descuentos', compact('datadescuentos','metas','estacion','concepto','clasificadores'));
+                    $fileName = 'pdfs/'.$estacion->est_nombre.'/'.$concepto->con_nombre.'-'.time().'.pdf';
+                    Storage::put($fileName,$pdf->output());
+                }
+
+            }
+        }
+
+        return response()->json([message=>'PDFs generados y guardados']);
+
+    }
+
+    Public function Rp_Descuentos_AFP(Request $request){
+
+
+        $estaciones = Estacion::where('ejecutora_e_id','=','001')->get();
+        $conceptos = Concepto::all();
+        $metas = Meta::where('m_anio_per','=','2024')->get();
+        $clasificadores = Clasificador::all();
+
+
+        foreach ($estaciones as $estacion) {
+            foreach ($conceptos as $concepto){
+
+               $sql = "SELECT p_num_doc, p_a_paterno, p_a_materno, p_nombres, est_nombre, idclasificador,clasificador, meta, pll_id_monto, estacion_est_id, concepto_cod_concepto 
+                FROM planilla_conceptos 
+                INNER JOIN conceptos ON planilla_conceptos.concepto_cod_concepto = conceptos.cod_concepto
+                INNER JOIN clasificador ON planilla_conceptos.clasificador_idclasificador = clasificador.idclasificador
+                INNER JOIN meta ON planilla_conceptos.meta_m_cod_meta = meta.m_cod_meta
+                INNER JOIN detalle_planilla ON planilla_conceptos.detalle_planilla_cod_detalle_planilla = detalle_planilla.cod_detalle_planilla
+                INNER JOIN contratos ON detalle_planilla.contrato_cod_contrato = contratos.cod_contrato
+                INNER JOIN estacion ON contratos.estacion_est_id = estacion.est_id
+                INNER JOIN personal ON contratos.personal_cod_personal = personal.cod_personal
+                WHERE estacion_est_id = ? AND concepto_cod_concepto = ? AND tipo_concepto_cod_tip_concepto=2 
+                ORDER BY clasificador, meta";
+
+                $datadescuentos = DB::select($sql, [$estacion->est_id, $concepto->cod_concepto]);
+
+                if(!empty($datadescuentos)) {
+                    $pdf = \PDF::loadView('pdf.rep_descuentos', compact('datadescuentos','metas','estacion','concepto','clasificadores'));
+                    $fileName = 'pdfs/'.$estacion->est_nombre.'/'.$concepto->con_nombre.'-'.time().'.pdf';
+                    Storage::put($fileName,$pdf->output());
+                }
+
+            }
+        }
+
+        return response()->json([message=>'PDFs generados y guardados']);
 
     }
 }
